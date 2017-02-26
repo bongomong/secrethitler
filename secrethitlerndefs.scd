@@ -190,6 +190,8 @@ Ndef(\liberal06, {
 
 )
 
+NdefMixer(s)
+Ndef(\liberal01).stop
 Ndef(\liberal06).play;
 Ndef(\fascist02).play;
 

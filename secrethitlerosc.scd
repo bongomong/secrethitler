@@ -1,33 +1,23 @@
 (
 
 NetAddr.broadcastFlag = true;
-~net = NetAddr("255.255.255.255", 57120);
+// get your actual network ip via shell command
+~net = NetAddr.new(Pipe.new("ifconfig en1 | grep \"inet \" | awk '{print $2}'" , "r").getLine, 57120);
 
-
-
-OSCdef(\secrethitler, { |msg|
-	//Masterfunktion für eingehende OSC-Message, zu Beginn des Spiels (~status == -1) werden die Funktionen initialisiert
-	//TODO -> Nachrichtenfilter (jetzt kann noch jeder Client immer Nachrichten senden); Election nach Kanzlerwahl
-	msg.postln;
-	if(~status == -1) {~init.value} {
-		if(~status == 0) {~chooseChancellor.value(msg[1])} {
-			if(~status == 1) {~draw.value} {
-				if(~status == 2) {~passTwo.value(msg[1])} {
-					if(~status == 3) {~reveal.value(msg[1])}
-				}
-			}
-		}
-	}
-}, \secrethitler);			//variabler recvport definierbar?
-
+OSCdef(\secrethitler, { |msg, time, addr|
+	addr.postln;
+	~nextFunction.value(msg[1]);
+}, \secrethitler)
 
 )
 
+
+
 /* TEST AREA
 
-~status = -1;						//setzt das Spiel auf den Zustand vor Beginn zurück
-~net.sendMsg(\secrethitler, 2)		//Standardmessage mit der die Spieler mit dem Spiel kommunizieren
-~net.sendMsg(\secrethitler, 0)
+~initGame.value;
+~net.sendMsg(\secrethitler, 0)		//Standardmessage mit der die Spieler mit dem Spiel kommunizieren
+b.sendMsg(\secrethitler, 0)
 
 
 ~whoIsChancellor
@@ -45,5 +35,6 @@ OSCdef(\secrethitler, { |msg|
 -> Ereignisse definieren: Was passiert, wenn eine Karte aufgedeckt wird?
 -> Spiellogik verfeinern (z.B. wird dreimal eine Wahl verloren, wird die oberste karte aufgedeckt)
 
+-> node proxy
 
 */
