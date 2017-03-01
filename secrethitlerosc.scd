@@ -1,7 +1,7 @@
 (
 
-~listOfPlayers = [];
-~playerNicknames = [];
+~listOfPlayers = [];		//contains ip addresses of players as symbols
+~playerNicknames = [];		//contains nicknames of players as symbols
 
 NetAddr.broadcastFlag = true;
 // get your actual network ip via shell command
@@ -15,8 +15,10 @@ OSCdef(\secrethitler, { |msg, time, addr|
 
 //gathers the ip-addresses and nicknames in the start of the game from the clients
 OSCdef(\newPlayer, { |msg, time, addr|
-	~listOfPlayers.add(addr.ip);
-	~playerNicknames.add(msg[1]);
+	if(~listOfPlayers.includes(addr.ip.asSymbol) == false) {
+		~listOfPlayers = ~listOfPlayers.add(addr.ip.asSymbol);
+		~playerNicknames = ~playerNicknames.add(msg[1].asSymbol);
+	}
 }, \newPlayer);
 
 )
@@ -46,5 +48,11 @@ b.sendMsg(\secrethitler, 0)
 -> Spiellogik verfeinern (z.B. wird dreimal eine Wahl verloren, wird die oberste karte aufgedeckt)
 
 -> node proxy
+
+*/
+
+/* FRAGEN
+
+-> .include gibt bei strings immer false. warum?
 
 */
