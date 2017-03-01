@@ -4,9 +4,11 @@
 
 NetAddr.broadcastFlag = true;
 // get your actual network ip via shell command
-~net = NetAddr.new(Pipe.new("ifconfig en1 | grep \"inet \" | awk '{print $2}'" , "r").getLine, 57120);
+//~net = NetAddr.new(Pipe.new("ifconfig en1 | grep \"inet \" | awk '{print $2}'" , "r").getLine, 57120);
+~net = NetAddr.new("192.168.178.25", 57120); //temporarily hard coded
+
 // ~master will contain the server's ip address, only he is allowed to communicate with the client
-~master = NetAddr.new;
+~master = ~net;
 
 OSCdef(\master, { |msg, time, addr|
 	addr.postln;
@@ -29,7 +31,11 @@ OSCdef(\master, { |msg, time, addr|
 ~listOfPlayers
 ~playerNicknames
 
-~net
+~net = NetAddr.new("192.168.178.58", 57120);
+
 
 ~master
 ~net.sendMsg(\master, 1)
+~net.sendMsg(\newPlayer, ~nickname)
+
+~net.sendMsg(\rest, 1)
