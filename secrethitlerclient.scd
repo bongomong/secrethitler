@@ -18,27 +18,18 @@ OSCdef(\master, { |msg, time, addr|
 
 	OSCdef(\master, { |msg, time, addr|
 		~master = addr;
-		~init.value;		//kann später weg
+		~net.sendMsg(\newPlayer, ~nickname);
+		//~init.value		//kann später weg
 	}, \master, ~master);
-
-	OSCdef(\findPlayers, { |msg, time, addr|
-		addr.postln;
-		~net.sendMsg(\newPlayer, ~nickname)
-	}, \findPlayers, ~master);
-
-
-
-	OSCdef(\newPlayer, { |msg, time, addr|
-		addr.ip.postln;
-		msg[1].postln;
-	}, \newPlayer);
-
 }
 
 )
+
+
+~listOfPlayers
+~playerNicknames
 
 ~net
 
 ~master
 ~net.sendMsg(\master, 1)
-~net.sendMsg(\findPlayers, 1)

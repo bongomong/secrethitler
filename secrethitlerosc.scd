@@ -1,13 +1,23 @@
 (
 
+~listOfPlayers = [];
+~playerNicknames = [];
+
 NetAddr.broadcastFlag = true;
 // get your actual network ip via shell command
 ~net = NetAddr.new(Pipe.new("ifconfig en1 | grep \"inet \" | awk '{print $2}'" , "r").getLine, 57120);
 
+//main communication unit for the clients
 OSCdef(\secrethitler, { |msg, time, addr|
 	addr.postln;
 	~nextFunction.value(msg[1]);
-}, \secrethitler)
+}, \secrethitler);
+
+//gathers the ip-addresses and nicknames in the start of the game from the clients
+OSCdef(\newPlayer, { |msg, time, addr|
+	~listOfPlayers.add(addr.ip);
+	~playerNicknames.add(msg[1]);
+}, \newPlayer);
 
 )
 
