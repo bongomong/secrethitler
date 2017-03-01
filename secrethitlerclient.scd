@@ -7,23 +7,12 @@ NetAddr.broadcastFlag = true;
 //~net = NetAddr.new(Pipe.new("ifconfig en1 | grep \"inet \" | awk '{print $2}'" , "r").getLine, 57120);
 ~net = NetAddr.new("192.168.178.25", 57120); //temporarily hard coded
 
-// ~master will contain the server's ip address, only he is allowed to communicate with the client
-~master = ~net;
 
 OSCdef(\master, { |msg, time, addr|
-	addr.postln;
-	~master = addr;
-	~init.value;
+	"ip versandt".postln;
+	~net.sendMsg(\newPlayer, ~nickname);
 }, \master);
 
-~init = {
-
-	OSCdef(\master, { |msg, time, addr|
-		~master = addr;
-		~net.sendMsg(\newPlayer, ~nickname);
-		//~init.value		//kann später weg
-	}, \master, ~master);
-}
 
 )
 
