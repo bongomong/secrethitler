@@ -1,11 +1,9 @@
 (
 
-~listOfPlayers = [];		//contains ip addresses of players as symbols
-~playerNicknames = [];		//contains nicknames of players as symbols
-
 NetAddr.broadcastFlag = true;
 // get your actual network ip via shell command
-~net = NetAddr.new(Pipe.new("ifconfig en1 | grep \"inet \" | awk '{print $2}'" , "r").getLine, 57120);
+//~net = NetAddr.new(Pipe.new("ifconfig en1 | grep \"inet \" | awk '{print $2}'" , "r").getLine, 57120);
+~net = NetAddr.new("192.168.178.25", 57120);
 
 //main communication unit for the clients
 OSCdef(\secrethitler, { |msg, time, addr|
@@ -40,7 +38,7 @@ b.sendMsg(\secrethitler, 0)
 /* TODO
 
 -> Initiales ermitteln der Spieler-IPs (Wir haben etwas ähnliches mal irgendwann mit Tobias und den Arduinos  gemacht)
--> Aufforderung an Spieler, etwas zu tun: Wie sende ich OSC-messages an einzelne Spieler?
+DONE	-> Aufforderung an Spieler, etwas zu tun: Wie sende ich OSC-messages an einzelne Spieler?
 -> Election: Alle Spieler müssen einmal "ja" oder "nein" wählen (ohne Enthaltungen). Wie finde ich heraus, von wem eine Nachricht ist? Wie fange ich es ab, wenn ein Client nicht antwortet oder einen Disconnect hat?
 -> Soundlogik: Ich möchte auf jeden Fall final generative "faschistische" und "liberale" Sounds haben, sodass das Spiel jedes Mal anders klingt. Zunächst code ich einfach ein paar Testsounds hart. Ich weiß nur noch nicht, ob ich Ndefs oder SynthDefs oder vielleicht was ganz anderes nehmen sollte...
 -> Soundrouting: Wie kann ich einzelnen Spielern über das Netzwerk meine Sounds zum Prelistening zur Verfügung stellen?

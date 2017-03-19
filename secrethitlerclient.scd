@@ -7,24 +7,44 @@ NetAddr.broadcastFlag = true;
 //~net = NetAddr.new(Pipe.new("ifconfig en1 | grep \"inet \" | awk '{print $2}'" , "r").getLine, 57120);
 ~net = NetAddr.new("192.168.178.25", 57120); //temporarily hard coded
 
-
+//this OSCdef sends ip and nickname to the server
 OSCdef(\master, { |msg, time, addr|
 	"ip versandt".postln;
 	~net.sendMsg(\newPlayer, ~nickname);
-}, \master);
+}, \master, ~net);
 
+//this OSCdef prints all commands from the server
+OSCdef(\depesche, { |msg|
+	msg[1].postln;
+}, \depesche, ~net);
 
 )
 
 
-~listOfPlayers
-~playerNicknames
+/*
+
+(
+~listOfPlayers.postln;
+~listOfPlayers[1].postln;
+~playerNicknames.postln;
+~listOfRoles.postln;
+)
+
+~listOfPlayers.includes(1.asSymbol)
 
 ~net = NetAddr.new("192.168.178.58", 57120);
+~net = NetAddr.new("255.255.255.255", 57120);
 
 
-~master
+~initGame.value;
+
 ~net.sendMsg(\master, 1)
 ~net.sendMsg(\newPlayer, ~nickname)
 
-~net.sendMsg(\rest, 1)
+~net.sendMsg(\secrethitler, "192.168.178.25")
+
+1.asSymbol.asInteger.postln
+
+~net.sendMsg(\depesche, "penis")
+
+*/

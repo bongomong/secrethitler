@@ -11,28 +11,54 @@
 	~amountl = 6;			// Anzahl Liberalenkarten
 	~fasstack = List.new;	// Stapel der Faschistenkarten
 	~libstack = List.new;	// Stapel der Liberalenkarten
-	~listOfPlayers = (0..5);	//provisorisch, später ip-liste
+	~listOfPlayers = [\0, \1, \2, \3, \4, \5];		//contains ip addresses of players as symbols TEMPORARILY HARDCODED
+	~playerNicknames = [\0, \1, \2, \3, \4, \5];		//contains nicknames of players as symbols TEMPORARILY HARDCODED
+	~listOfRoles = List.new;
 	~whoHasHand = nil;
-	~whoIsPresident = ~listOfPlayers.choose;
+	~whoIsPresident = nil;
 	~whoIsChancellor = nil;
-	~nextFunction = ~createStack;
+	~nextFunction = ~gamestart;
+};
+
+~gamestart = {
+	~giveRoles.value;
+	~createStack.value;
+	~rolePresident.value;
+	~nextFunction = ~chooseChancellor;
+};
+
+//roles the roles of the players: 0 = fascist, 1 = liberal, 2 = hitler
+~giveRoles = {
+	var numberOfPlayers, lib, fas;
+	numberOfPlayers = ~listOfPlayers.size;
+	if(numberOfPlayers.odd) {lib = numberOfPlayers + 1 / 2} {lib = numberOfPlayers +2 / 2};
+	fas = numberOfPlayers - lib - 1;
+	~listOfRoles = ((0 ! fas) ++ (1 ! lib) ++ 2).scramble;
+	"Die Rollen wurden verteilt:".postln;
+	~listOfRoles.postln;
 };
 
 ~createStack = {
+	// BROKEN wegen ~listOfPlayers
 	// Erstellt gemischten Nachziehstapel (0 --> Faschistenkarte, 1 --> Lieberalenkarte)
 	// Später können hier statt 0 und 1 Ndefs abgelegt werden
-	~initGame.value;
 	~stack = ((0 ! ~amountf) ++ (1 ! ~amountl)).scramble;
 	"Ein neues Spiel hat begonnen: ".postln;
-	~nextFunction = ~chooseChancellor;
 	~check.value;
 };
 
+~rolePresident = {
+	~whoIsPresident = ~listOfPlayers.choose;
+	"Der erste Präsident ist:".postln;
+	~whoIsPresident.postln;
+};
 
 ~chooseChancellor = { |chancellor|
 	//präsident wählt kanzler, check1 ob spieler existiert, check2 ob spieler letzter kanzler oder präsident war (darf nicht wiedergewählt werden)
 	//TODO: 5bis6 spieler darf letzter präsident gewählt werden
-	if(~listOfPlayers.includes(chancellor.asInteger)) {
+	"hallo".postln;
+	chancellor.postln;
+	if(~listOfPlayers.includes(chancellor.asSymbol)) {
 		if(and(~whoIsChancellor != chancellor, ~whoIsPresident != chancellor)) {
 			~whoIsChancellor = chancellor;
 			chancellor.asString.postln;
@@ -101,8 +127,9 @@
 
 /* TEST AREA
 
-~nextFunction.value(0);
+~nextFunction
 ~initGame.value;
+~giveRoles.value;
 ~createStack.value;
 
 ~chooseChancellor.value(3);
