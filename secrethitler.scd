@@ -2,6 +2,7 @@
 // https:// de.wikipedia.org/wiki/Secret_Hitler
 
 (
+~nextFunction = ~initGame;
 
 ~initGame = {
 	~stack = List.new;		// Nachziehstapel (.at(0) --> oberste Karte)
@@ -11,20 +12,27 @@
 	~amountl = 6;			// Anzahl Liberalenkarten
 	~fasstack = List.new;	// Stapel der Faschistenkarten
 	~libstack = List.new;	// Stapel der Liberalenkarten
-	~listOfPlayers = [\0, \1, \2, \3, \4, \5];		//contains ip addresses of players as symbols TEMPORARILY HARDCODED
+	~listOfPlayers = ['192.168.178.26', '192.168.178.27', '192.168.178.28', '192.168.178.29', '192.168.178.30', '192.168.178.31'];		//contains ip addresses of players as symbols TEMPORARILY HARDCODED
 	~playerNicknames = [\0, \1, \2, \3, \4, \5];		//contains nicknames of players as symbols TEMPORARILY HARDCODED
 	~listOfRoles = List.new;
 	~whoHasHand = nil;
 	~whoIsPresident = nil;
-	~whoIsChancellor = nil;
-	~nextFunction = ~gamestart;
+	~presidentNetAddress = NetAddr.new;
+	~chancellor = nil;
+	~chancellorNetAddress = NetAddr.new;
+	~lastPresident = nil;
+	~lastChancellor = nil;
+	~listOfVotes = nil!6;
+	~gamestart.value;
 };
 
 ~gamestart = {
 	~giveRoles.value;
 	~createStack.value;
 	~rolePresident.value;
+	~setPresidentIP.value;
 	~nextFunction = ~chooseChancellor;
+	~sendToPresident.value("Du bist Präsident! Bitte wähle einen Kanzler!");
 };
 
 //roles the roles of the players: 0 = fascist, 1 = liberal, 2 = hitler
@@ -53,14 +61,33 @@
 	~whoIsPresident.postln;
 };
 
+~setPresidentIP = {
+	~presidentNetAddress = NetAddr(~whoIsPresident.asString, 57120);
+	~presidentNetAddress.postln;
+};
+
+~sendToPresident = { |msg|
+	~presidentNetAddress.sendMsg(\depesche, msg.asString);
+};
+
+~sendToChancellor = { |msg|
+	~chancellorNetAddress.sendMsg(\depesche, msg.asString);
+};
+
+~sendToAll = { |msg|
+	for (1, ~listOfPlayers.size, { arg i;
+		NetAddr.new(~listOfPlayers[i - 1].asString, 57120).sendMsg(\depesche, msg.asString)
+	})
+};
+
 ~chooseChancellor = { |chancellor|
-	//präsident wählt kanzler, check1 ob spieler existiert, check2 ob spieler letzter kanzler oder präsident war (darf nicht wiedergewählt werden)
+	var chancellorIP;
+	// präsident wählt kanzler, check1 ob spieler existiert, check2 ob spieler letzter kanzler oder präsident war (darf nicht wiedergewählt werden)
 	//TODO: 5bis6 spieler darf letzter präsident gewählt werden
-	"hallo".postln;
-	chancellor.postln;
-	if(~listOfPlayers.includes(chancellor.asSymbol)) {
-		if(and(~whoIsChancellor != chancellor, ~whoIsPresident != chancellor)) {
-			~whoIsChancellor = chancellor;
+	chancellorIP = ~listOfPlayers[~playerNicknames.indexOf(chancellor.asSymbol)];
+	if(~playerNicknames.includes(chancellor.asSymbol)) {
+		if(and(~whoIsChancellor != chancellorIP, ~whoIsPresident != chancellorIP)) {
+			~whoIsChancellor = chancellorIP;	//TODO: Wahl geht noch immer durch
 			chancellor.asString.postln;
 			"is new chancellor".postln;
 			~nextFunction = ~draw;
@@ -72,6 +99,21 @@
 	}
 };
 
+~election = { |thepolls|
+	// checks if the chancellor has been elected
+	var ja = 0, nein = 0;
+	thepolls.do({ arg item;
+		if(item == "ja", {ja = ja + 1});
+		if(item == "nein", {nein = nein + 1});
+	});
+	if(ja > nein, {
+		"Der Kanzler wurde gewählt".postln;
+		~nextFunction = ~draw
+	}, {
+		"Der Kanzler wurde nicht gewählt".postln;
+		~nextFunction = ~chooseChancellor
+	})
+};
 
 ~draw = {
 	// Zieht drei Karten vom Nachziehstapel und erstellt daraus eine Hand
@@ -105,6 +147,15 @@
 		~check.value;
 	});
 	~nextFunction = ~chooseChancellor;
+	//long game win conditions
+	if(~fasstack.size == 6, {
+		"Die Faschisten haben gewonnen!".postln;
+		~nextFunction = ~initGame
+	});
+	if(~libstack.size == 5, {
+		"Die Liberalen haben gewonnen!".postln;
+		~nextFunction = ~initGame
+	})
 };
 
 ~check = {
@@ -133,6 +184,7 @@
 ~createStack.value;
 
 ~chooseChancellor.value(3);
+~election.value(["ja", "ja", "ja", "nein", "nein", "nein"])
 ~draw.value;
 ~passTwo.value(0);
 ~reveal.value(0);

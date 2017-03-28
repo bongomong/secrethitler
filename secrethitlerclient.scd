@@ -25,7 +25,7 @@ OSCdef(\depesche, { |msg|
 
 (
 ~listOfPlayers.postln;
-~listOfPlayers[1].postln;
+~listOfPlayers[6].postln;
 ~playerNicknames.postln;
 ~listOfRoles.postln;
 )
@@ -35,16 +35,21 @@ OSCdef(\depesche, { |msg|
 ~net = NetAddr.new("192.168.178.58", 57120);
 ~net = NetAddr.new("255.255.255.255", 57120);
 
-
+(
 ~initGame.value;
+~net.sendMsg(\master, 1);
+~net.sendMsg(\secrethitler, 1)
+~net.sendMsg(\secrethitler, 0)
+~election.value(["ja", "ja", "ja", "ja", "nein", "nein"])
+)
 
-~net.sendMsg(\master, 1)
-~net.sendMsg(\newPlayer, ~nickname)
-
-~net.sendMsg(\secrethitler, "192.168.178.25")
-
-1.asSymbol.asInteger.postln
+~whoIsChancellor
+~whoIsPresident
 
 ~net.sendMsg(\depesche, "penis")
+
+~nextFuntion
+
+
 
 */
