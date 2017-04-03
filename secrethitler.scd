@@ -18,6 +18,8 @@
 	~whoHasHand = nil;
 	~whoIsPresident = nil;
 	~presidentNetAddress = NetAddr.new;
+	~possiblePresidentIndizes = List.new;
+	~presidentIndex = nil;
 	~chancellor = nil;
 	~chancellorNetAddress = NetAddr.new;
 	~lastPresident = nil;
@@ -27,6 +29,7 @@
 };
 
 ~gamestart = {
+	~possiblePresidentIndizes = (..~listOfPlayers.size -1);
 	~giveRoles.value;
 	~createStack.value;
 	~rolePresident.value;
@@ -56,9 +59,9 @@
 };
 
 ~rolePresident = {
-	~whoIsPresident = ~listOfPlayers.choose;
-	"Der erste Präsident ist:".postln;
-	~whoIsPresident.postln;
+	~presidentIndex = ~possiblePresidentIndizes.choose;
+	~whoIsPresident = ~listOfPlayers[~presidentIndex];
+	("Der erste Präsident ist:" + ~whoIsPresident).postln;
 };
 
 ~setPresidentIP = {
@@ -88,8 +91,8 @@
 	if(~playerNicknames.includes(chancellor.asSymbol)) {
 		if(and(~whoIsChancellor != chancellorIP, ~whoIsPresident != chancellorIP)) {
 			~whoIsChancellor = chancellorIP;	//TODO: Wahl geht noch immer durch
-			chancellor.asString.postln;
-			"is new chancellor".postln;
+			//~getPolls(chancellor).value;
+			(chancellor.asString + "is new chancellor").postln;
 			~nextFunction = ~draw;
 		} {
 			"This player is not electable!".postln
@@ -99,20 +102,32 @@
 	}
 };
 
-~election = { |thepolls|
+/*
+~getPolls = { |candidat, playerIP|
+	var votes;
+	if(~listOfVotes.includes(nil) == false, {
+		~election(candidat, votes)
+	});
+};
+*/
+
+~election = { |candidat, thePolls|
 	// checks if the chancellor has been elected
 	var ja = 0, nein = 0;
-	thepolls.do({ arg item;
+	thePolls.do({ arg item;
 		if(item == "ja", {ja = ja + 1});
 		if(item == "nein", {nein = nein + 1});
 	});
 	if(ja > nein, {
 		"Der Kanzler wurde gewählt".postln;
+		~lastChancellor = ~whoIsChancellor;
+		~whoIsChancellor = candidat;
 		~nextFunction = ~draw
 	}, {
 		"Der Kanzler wurde nicht gewählt".postln;
 		~nextFunction = ~chooseChancellor
-	})
+	});
+	~listOfVotes = nil!6;
 };
 
 ~draw = {
@@ -139,6 +154,11 @@
 	~hand = List.new;
 	"Eine Karte wurde aufgedeckt, eine abgelegt: ".postln;
 	~check.value;
+	//sets new president and remembers who was the last one
+	~lastPresident = ~whoIsPresident;
+	~presidentIndex = ~presidentIndex + 1 % ~possiblePresidentIndizes.size;
+	~whoIsPresident = ~listOfPlayers[~presidentIndex];
+	(~whoIsPresident.asString + "ist neuer Präsident").postln;
 	// Sollten im Nachziehstapel weniger als 3 Karten sein, wird der Ablagestapel wieder in den Nachziehstapel gemischt
 	if(~stack.size < 3, {
 		~stack = ~stack.addAll(~trash).scramble;
@@ -167,9 +187,9 @@
 	~trash.postln;
 	"Hand: ".postln;
 	~hand.postln;
-	"Faschistenstapel".postln;
+	"Faschistenstapel:".postln;
 	~fasstack.postln;
-	"Liberalenstapel".postln;
+	"Liberalenstapel:".postln;
 	~libstack.postln;
 	"------------------------------------------------".postln;
 };
@@ -192,4 +212,3 @@
 ~check.value;
 
 */
-

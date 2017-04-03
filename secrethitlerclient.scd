@@ -38,13 +38,14 @@ OSCdef(\depesche, { |msg|
 (
 ~initGame.value;
 ~net.sendMsg(\master, 1);
-~net.sendMsg(\secrethitler, 1)
 ~net.sendMsg(\secrethitler, 0)
+~net.sendMsg(\secrethitler, 2)
 ~election.value(["ja", "ja", "ja", "ja", "nein", "nein"])
 )
 
 ~whoIsChancellor
 ~whoIsPresident
+~lastPresident
 
 ~net.sendMsg(\depesche, "penis")
 

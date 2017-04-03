@@ -8,7 +8,8 @@ NetAddr.broadcastFlag = true;
 //main communication unit for the clients
 OSCdef(\secrethitler, { |msg, time, addr|
 	addr.postln;
-	~nextFunction.value(msg[1]);
+	msg[1].postln;
+	~nextFunction.value(msg[1], addr);		//geht das so für die wahl?
 }, \secrethitler);
 
 //gathers the ip-addresses and nicknames in the start of the game from the clients
@@ -26,7 +27,7 @@ OSCdef(\newPlayer, { |msg, time, addr|
 /* TEST AREA
 
 ~initGame.value;
-~net.sendMsg(\secrethitler, 0)		//Standardmessage mit der die Spieler mit dem Spiel kommunizieren
+~net.sendMsg(\secrethitler, 2)		//Standardmessage mit der die Spieler mit dem Spiel kommunizieren
 b.sendMsg(\secrethitler, 0)
 
 
@@ -51,6 +52,7 @@ DONE	-> Aufforderung an Spieler, etwas zu tun: Wie sende ich OSC-messages an ein
 
 /* FRAGEN
 
--> .include gibt bei strings immer false. warum?
+-> .includes gibt bei strings immer false. warum?
+		ANTWORT: .includes checkt nach identity (===), nicht equality (==)
 
 */
