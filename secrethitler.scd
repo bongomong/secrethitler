@@ -1,8 +1,13 @@
 // https:// secrethitler.online/
 // https:// de.wikipedia.org/wiki/Secret_Hitler
+(
+~listOfPlayers = [NetAddr("192.168.178.26", 57120), NetAddr("192.168.178.27", 57120), NetAddr("192.168.178.28", 57120), NetAddr("192.168.178.29", 57120), NetAddr("192.168.178.30", 57120), NetAddr("192.168.178.31", 57120),];
+//~listOfPlayers = ['192.168.178.26', '192.168.178.27', '192.168.178.28', '192.168.178.29', '192.168.178.30', '192.168.178.31'];		//contains ip addresses of players as symbols TEMPORARILY HARDCODED
+~playerNicknames = [\0, \1, \2, \3, \4, \5];		//contains nicknames of players as symbols TEMPORARILY HARDCODED
+)
 
 (
-~nextFunction = ~initGame;
+//~nextFunction = ~initGame;
 
 ~initGame = {
 	~stack = List.new;		// Nachziehstapel (.at(0) --> oberste Karte)
@@ -12,19 +17,17 @@
 	~amountl = 6;			// Anzahl Liberalenkarten
 	~fasstack = List.new;	// Stapel der Faschistenkarten
 	~libstack = List.new;	// Stapel der Liberalenkarten
-	~listOfPlayers = ['192.168.178.26', '192.168.178.27', '192.168.178.28', '192.168.178.29', '192.168.178.30', '192.168.178.31'];		//contains ip addresses of players as symbols TEMPORARILY HARDCODED
-	~playerNicknames = [\0, \1, \2, \3, \4, \5];		//contains nicknames of players as symbols TEMPORARILY HARDCODED
 	~listOfRoles = List.new;
 	~whoHasHand = nil;
 	~whoIsPresident = nil;
-	~presidentNetAddress = NetAddr.new;
 	~possiblePresidentIndizes = List.new;
 	~presidentIndex = nil;
-	~chancellor = nil;
-	~chancellorNetAddress = NetAddr.new;
 	~lastPresident = nil;
+	~whoIsChancellor = nil;
 	~lastChancellor = nil;
-	~listOfVotes = nil!6;
+	~chancellorCandidate = nil;
+	~listOfVotes = nil ! ~listOfPlayers.size;		// TODO: muss noch variabel an spieleranzahl angepasst werden
+	~unsuccessfulVoteCounter = 0;
 	~gamestart.value;
 };
 
@@ -33,12 +36,11 @@
 	~giveRoles.value;
 	~createStack.value;
 	~rolePresident.value;
-	~setPresidentIP.value;
 	~nextFunction = ~chooseChancellor;
 	~sendToPresident.value("Du bist Präsident! Bitte wähle einen Kanzler!");
 };
 
-//roles the roles of the players: 0 = fascist, 1 = liberal, 2 = hitler
+// roles the roles of the players: 0 = fascist, 1 = liberal, 2 = hitler
 ~giveRoles = {
 	var numberOfPlayers, lib, fas;
 	numberOfPlayers = ~listOfPlayers.size;
@@ -64,13 +66,8 @@
 	("Der erste Präsident ist:" + ~whoIsPresident).postln;
 };
 
-~setPresidentIP = {
-	~presidentNetAddress = NetAddr(~whoIsPresident.asString, 57120);
-	~presidentNetAddress.postln;
-};
-
 ~sendToPresident = { |msg|
-	~presidentNetAddress.sendMsg(\depesche, msg.asString);
+	~whoIsPresident.sendMsg(\depesche, msg.asString);
 };
 
 ~sendToChancellor = { |msg|
@@ -79,21 +76,27 @@
 
 ~sendToAll = { |msg|
 	for (1, ~listOfPlayers.size, { arg i;
-		NetAddr.new(~listOfPlayers[i - 1].asString, 57120).sendMsg(\depesche, msg.asString)
+		~listOfPlayers[i - 1].sendMsg(\depesche, msg.asString)
 	})
 };
 
+//~chooseChancellor.value(1)
+//~sendToAll.value("penis")
+
 ~chooseChancellor = { |chancellor|
-	var chancellorIP;
+	var chancellorNetAddr;
 	// präsident wählt kanzler, check1 ob spieler existiert, check2 ob spieler letzter kanzler oder präsident war (darf nicht wiedergewählt werden)
 	//TODO: 5bis6 spieler darf letzter präsident gewählt werden
-	chancellorIP = ~listOfPlayers[~playerNicknames.indexOf(chancellor.asSymbol)];
 	if(~playerNicknames.includes(chancellor.asSymbol)) {
-		if(and(~whoIsChancellor != chancellorIP, ~whoIsPresident != chancellorIP)) {
-			~whoIsChancellor = chancellorIP;	//TODO: Wahl geht noch immer durch
+		chancellorNetAddr = ~listOfPlayers[~playerNicknames.indexOf(chancellor.asSymbol)];
+		if(and(~lastChancellor != chancellorNetAddr, ~lastPresident != chancellorNetAddr, ~whoIsPresident != chancellorNetAddr)) {
+			~chancellorCandidate = chancellorNetAddr;	//TODO: Wahl geht noch immer durch
 			//~getPolls(chancellor).value;
-			(chancellor.asString + "is new chancellor").postln;
-			~nextFunction = ~draw;
+			(chancellor.asString + "ist neuer Kanzlerkandidat").postln;
+			~sendToAll.value((chancellor + "ist neuer Kanzlerkandidat! Stimme mit \"ja\" oder \"nein\"!"));
+			// set length of listOfVotes to the actual value shortly before the election
+			~listOfVotes = nil ! ~listOfPlayers.size;
+			~nextFunction = ~getPolls;
 		} {
 			"This player is not electable!".postln
 		}
@@ -102,32 +105,41 @@
 	}
 };
 
-/*
-~getPolls = { |candidat, playerIP|
+~getPolls = { |vote, playerNetAddr|
 	var votes;
-	if(~listOfVotes.includes(nil) == false, {
-		~election(candidat, votes)
+	//votes = ["ja", "ja", "ja", "nein", "nein", "nein"];
+	vote.class.postln;
+	//playerNetAddr.postln;
+	if(~listOfPlayers.includesEqual(playerNetAddr), {
+		if(or(vote.asString == "ja", vote.asString == "nein"), {
+			~listOfVotes.put(~listOfPlayers.indexOfEqual(playerNetAddr), vote);
+			~listOfVotes.postln;
+		}, {
+			playerNetAddr.sendMsg(\depesche, "Ungültige Stimmabgabe! Wähle \"ja\" oder \"nein\"!")
+		})
 	});
+	if(~listOfVotes.includes(nil) == false, {~election.value(~chancellorCandidate, ~listOfVotes)});
 };
-*/
 
-~election = { |candidat, thePolls|
+~election = { |candidate, thePolls|
 	// checks if the chancellor has been elected
 	var ja = 0, nein = 0;
+	(candidate.asString + thePolls.asString).postln;
 	thePolls.do({ arg item;
+		item.postln;
 		if(item == "ja", {ja = ja + 1});
 		if(item == "nein", {nein = nein + 1});
 	});
 	if(ja > nein, {
 		"Der Kanzler wurde gewählt".postln;
-		~lastChancellor = ~whoIsChancellor;
-		~whoIsChancellor = candidat;
+		~whoIsChancellor = candidate;
 		~nextFunction = ~draw
 	}, {
 		"Der Kanzler wurde nicht gewählt".postln;
+		~unsuccessfulVoteCounter = ~unsuccessfulVoteCounter + 1;
+		//TODO: if(~unsuccessfulVoteCounter == 3, {})
 		~nextFunction = ~chooseChancellor
 	});
-	~listOfVotes = nil!6;
 };
 
 ~draw = {
@@ -156,6 +168,8 @@
 	~check.value;
 	//sets new president and remembers who was the last one
 	~lastPresident = ~whoIsPresident;
+	~lastChancellor = ~whoIsChancellor;
+	~whoIsChancellor = nil;
 	~presidentIndex = ~presidentIndex + 1 % ~possiblePresidentIndizes.size;
 	~whoIsPresident = ~listOfPlayers[~presidentIndex];
 	(~whoIsPresident.asString + "ist neuer Präsident").postln;

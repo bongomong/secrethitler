@@ -14,8 +14,8 @@ OSCdef(\secrethitler, { |msg, time, addr|
 
 //gathers the ip-addresses and nicknames in the start of the game from the clients
 OSCdef(\newPlayer, { |msg, time, addr|
-	if(~listOfPlayers.includes(addr.ip.asSymbol) == false) {
-		~listOfPlayers = ~listOfPlayers.add(addr.ip.asSymbol);
+	if(~listOfPlayers.includesEqual(addr) == false) {
+		~listOfPlayers = ~listOfPlayers.add(addr);
 		~playerNicknames = ~playerNicknames.add(msg[1].asSymbol);
 	}
 }, \newPlayer);

@@ -25,12 +25,16 @@ OSCdef(\depesche, { |msg|
 
 (
 ~listOfPlayers.postln;
-~listOfPlayers[6].postln;
+~listOfPlayers[0].sendMsg(\secrethitler, 0);
 ~playerNicknames.postln;
 ~listOfRoles.postln;
 )
 
-~listOfPlayers.includes(1.asSymbol)
+
+~unsuccessfulVoteCounter
+~election.value(1, ("nein"!3)
+~listOfVotes = "ja"!7
+~listOfVotes.postln
 
 ~net = NetAddr.new("192.168.178.58", 57120);
 ~net = NetAddr.new("255.255.255.255", 57120);
@@ -38,19 +42,19 @@ OSCdef(\depesche, { |msg|
 (
 ~initGame.value;
 ~net.sendMsg(\master, 1);
-~net.sendMsg(\secrethitler, 0)
-~net.sendMsg(\secrethitler, 2)
-~election.value(["ja", "ja", "ja", "ja", "nein", "nein"])
+~net.sendMsg(\secrethitler, "ja")
+~net.sendMsg(\secrethitler, 3)
+~election.value(1, ["ja", "ja", "ja", "nein", "nein", "nein"])
 )
 
 ~whoIsChancellor
 ~whoIsPresident
 ~lastPresident
+~lastChancellor
 
-~net.sendMsg(\depesche, "penis")
 
 ~nextFuntion
 
-
+~listOfPlayers.indexOfEqual(NetAddr("192.168.178.27", 57120))
 
 */
