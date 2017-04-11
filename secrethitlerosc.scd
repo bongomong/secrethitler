@@ -7,8 +7,10 @@ NetAddr.broadcastFlag = true;
 
 //main communication unit for the clients
 OSCdef(\secrethitler, { |msg, time, addr|
+	"____________________".postln;
 	addr.postln;
 	msg[1].postln;
+	"____________________".postln;
 	~nextFunction.value(msg[1], addr);		//geht das so für die wahl?
 }, \secrethitler);
 
@@ -16,7 +18,7 @@ OSCdef(\secrethitler, { |msg, time, addr|
 OSCdef(\newPlayer, { |msg, time, addr|
 	if(~listOfPlayers.includesEqual(addr) == false) {
 		~listOfPlayers = ~listOfPlayers.add(addr);
-		~playerNicknames = ~playerNicknames.add(msg[1].asSymbol);
+		~playerNicknames = ~playerNicknames.add(msg[1].asString);
 	}
 }, \newPlayer);
 

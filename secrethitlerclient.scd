@@ -30,6 +30,8 @@ OSCdef(\depesche, { |msg|
 ~listOfRoles.postln;
 )
 
+~listOfPlayers[5];
+~playerNicknames[5];
 
 ~unsuccessfulVoteCounter
 ~election.value(1, ("nein"!3)
@@ -41,9 +43,11 @@ OSCdef(\depesche, { |msg|
 
 (
 ~initGame.value;
+~net.sendMsg(\depesche, 1);
 ~net.sendMsg(\master, 1);
-~net.sendMsg(\secrethitler, "ja")
-~net.sendMsg(\secrethitler, 3)
+~net.sendMsg(\secrethitler, 0)
+~net.sendMsg(\secrethitler, "Erich")
+~net.sendMsg(\secrethitler, "nein")
 ~election.value(1, ["ja", "ja", "ja", "nein", "nein", "nein"])
 )
 
@@ -51,7 +55,7 @@ OSCdef(\depesche, { |msg|
 ~whoIsPresident
 ~lastPresident
 ~lastChancellor
-
+~lastDepesche.value
 
 ~nextFuntion
 
