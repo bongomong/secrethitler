@@ -16,30 +16,46 @@ geordnet
 
 */
 
-b = Buffer.read(s, "/Users/admin/Desktop/Sebastian/Musik und Medien/MI/2016 VM/secrethitler/Flag in wind sound effect.wav");
+b = Buffer.read(s, "E:/bongomong/secrethitler/sounddata/The Great Dictator Speech- Charlie Chaplin.wav");
+b = Buffer.read(s, "E:/bongomong/secrethitler/sounddata/snare drum march snare solo field march drum line snare drum solo.wav");
 
 
 (
 g = Ndef.new(\penis213, {var sig;
-	//sig = Out.ar(0, PlayBuf.ar(1, b));
-	sig = PlayBuf.ar(2, b, 1);
-	sig = sig;
-	//sig = sig * EnvGen.kr(Env.perc(3, 1), doneAction: 1);
-	sig = sig.distort.distort.distort.clip;
-	sig = sig * sig;
+    //sig = Out.ar(0, PlayBuf.ar(1, b));
+    sig = PlayBuf.ar(2, b, 1);
+    // sig = DelayN.ar(sig, 0.3, [0.4, 0.26]);
+    // sig = AllpassN.ar(sig, 0.05, {Rand(0.01, 0.1)}.dup(2), 2);
+    // sig = OnePole.ar(sig, 0.1, 200);
+    sig = sig.clip;
+    // sig = sig * SinOsc.ar(0.05)*0.5;
+    sig = GVerb.ar(sig, 6, revtime:7);
+    // sig = Phasor.ar(sig, 0.02);
+    // sig = sig * EnvGen.kr(Env.perc(3, 5), doneAction: 1);
+    sig = Limiter.ar(sig, 0.95, 0.01);
 })
 )
 
 g.play
 
-PlayBuf.ar(2, b)
+t = Task({ { "I'm loopy".postln; 1.wait;}.loop });
+t.start
+(
+loop {
 
-{SoundIn.ar(0).fold2(0.3) * 0.2}.play
-
-using fold2 works well, as does clip
-
-{SoundIn.ar(0).clip2(0.3) * 0.2}.play
-
-and there's also the obviously titled distort
-
-{SoundIn.ar(0).distort}.play
+    "hello".postln;
+    1.wait;
+}
+).start
+//
+// PlayBuf.ar(2, b)
+//
+// {SoundIn.ar(0).fold2(0.3) * 0.2}.play
+//
+// using fold2 works well, as does clip
+//
+// {SoundIn.ar(0).clip2(0.3) * 0.2}.play
+//
+// and there's also the obviously titled distort
+//
+// {SoundIn.ar(0).distort}.play
