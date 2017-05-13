@@ -30,8 +30,6 @@ Ndef(\fascist03, {
 
 }).add;
 
-Ndef(\fascist03).free
-
 Ndef(\fascist04, {
 
     var car, mod;

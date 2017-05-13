@@ -15,9 +15,9 @@ rhythmisch
 geordnet
 
 */
-
-b = Buffer.read(s, "E:/bongomong/secrethitler/sounddata/The Great Dictator Speech- Charlie Chaplin.wav");
-b = Buffer.read(s, "E:/bongomong/secrethitler/sounddata/snare drum march snare solo field march drum line snare drum solo.wav");
+b = Buffer.new;
+b = Buffer.read(s, "D:/coding/bongomong/secrethitler/sounddata/The Great Dictator Speech- Charlie Chaplin.wav");
+b = Buffer.read(s, "D:/coding/bongomong/secrethitler/sounddata/snare drum march snare solo field march drum line snare drum solo.wav");
 
 
 (
@@ -39,6 +39,7 @@ g = Ndef.new(\penis213, {var sig;
 g.play
 
 t = Task({ { "I'm loopy".postln; 1.wait;}.loop });
+t = Task({ {a = 3.rand; g.play; a.wait; g.stop; a.wait}.loop });
 t.start
 (
 loop {
