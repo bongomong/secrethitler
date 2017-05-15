@@ -244,6 +244,12 @@
 	~stack.at(0).play;
 	if(~stack.at(0).key.asString.contains("fascist"), {~fasstack.add(~stack.removeAt(0))}, {~libstack.add(~hand.removeAt(0))});
 	~sendToAll.value("Ein Gesetz wurde aufgrund von politischer Stagnation im Notstand erhoben!");
+	if(~stack.size < 3, {
+        ~stack = ~stack.addAll(~trash).scramble;
+        ~trash.clear;
+        "Der Ablagestapel wurde in den Nachziehstapel gemsicht:".postln;
+        ~check.value;
+    });
 };
 
 ~check = {
