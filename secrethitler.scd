@@ -207,7 +207,13 @@
 ~reveal = {|discard = 0|
     // Legt von den verbleibenden zwei Karten eine auf den Ablagestapel und legt die andere entweder auf den Liberalenstapel oder den Faschistenstapel
     ~trash.add(~hand.removeAt(discard));
-	if(~hand.at(0).key.asString.contains("fascist"), {~fasstack.add(~hand.at(0))}, {~libstack.add(~hand.at(0))});
+	if(~hand.at(0).key.asString.contains("fascist"), {
+		~fasstack.add(~hand.at(0));
+		~sendToAll.value("Ein faschistisches Gesetz wurde umgesetzt!\rAnzahl faschistischer Gesetze:" + ~fasstack.size + "\rAnzahl liberaler Gesetze:" + ~libstack.size);
+	}, {
+		~libstack.add(~hand.at(0));
+		~sendToAll.value("Ein liberales Gesetz wurde umgesetzt!\rAnzahl faschistischer Gesetze:" + ~fasstack.size + "\rAnzahl liberaler Gesetze:" + ~libstack.size);
+	});
     ~hand.at(0).play;
     ~hand = List.new;
     "Eine Karte wurde aufgedeckt, eine abgelegt: ".postln;
@@ -242,8 +248,14 @@
 
 ~forcedReveal = {
 	~stack.at(0).play;
-	if(~stack.at(0).key.asString.contains("fascist"), {~fasstack.add(~stack.removeAt(0))}, {~libstack.add(~hand.removeAt(0))});
-	~sendToAll.value("Ein Gesetz wurde aufgrund von politischer Stagnation im Notstand erhoben!");
+	~sendToAll.value("Es wurden drei Regierungen in Folge abgelehnt! Die Legislative muss reagieren!");
+	if(~stack.at(0).key.asString.contains("fascist"), {
+		~fasstack.add(~stack.removeAt(0));
+		~sendToAll.value("Ein faschistisches Gesetz wurde umgesetzt!\rAnzahl faschistischer Gesetze:" + ~fasstack.size + "\rAnzahl liberaler Gesetze:" + ~libstack.size);
+	}, {
+		~libstack.add(~hand.removeAt(0));
+		~sendToAll.value("Ein liberales Gesetz wurde umgesetzt!\rAnzahl faschistischer Gesetze:" + ~fasstack.size + "\rAnzahl liberaler Gesetze:" + ~libstack.size);
+	});
 	if(~stack.size < 3, {
         ~stack = ~stack.addAll(~trash).scramble;
         ~trash.clear;
