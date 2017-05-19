@@ -19,11 +19,11 @@ OSCdef(\depesche, { |msg|
 }, \depesche, ~net);
 
 // this OSCdef opens a gui for the sounds that can be selected as president or chancellor
-OSCdef(\prelisten, { |msg|
+OSCdef(\listen, { |msg|
 	var selection;
 	selection = msg.drop(1).postln;
-	{~prelisten.value(selection)}.defer;
-}, \prelisten, ~net);
+	{~listen.value(selection)}.defer;
+}, \listen, ~net);
 
 // this OSCdef opens a gui for the sounds that can be selected as president or chancellor
 OSCdef(\choose, { |msg|
@@ -32,91 +32,101 @@ OSCdef(\choose, { |msg|
 	{~choose.value(selection)}.defer;
 }, \choose, ~net);
 
-)
 
-~net.sendMsg(\choose, *[["Adolf", "Bertha", "Claus", "Dagmar", "Erich", "Franz"]].foldOSC);
 
-(
-// prelisten gui
-~prelisten = { |selection|
-	var win, but1, but2, but3;
+
+
+
+// listen gui
+~listen = { |selection|
+	var win, but1, but2, but3, but11, but22, but33;
 	selection.postln;
-	win = Window.new("Prelisten", Rect(200,200,360,100));
+	win = Window.new("Gesetzentwürfe", Rect(200,200,360,160));
 
 	but1 = Button.new(win,Rect(30,40,80,30)).states_([["Play"],["Stop"]]);
-	StaticText.new(win,Rect(53,15,80,30)).string_("Sound1");
-	but1.action = { if (but1.value.asBoolean) { Ndef(selection[0]).play } { Ndef(selection[0]).free } };
+	StaticText.new(win,Rect(53,15,80,30)).string_("Gesetz 1");
+	but1.action = { if (but1.value.asBoolean) { Ndef(selection[0]).play } { Ndef(selection[0]).stop } };
+
+	but11 = Button.new(win,Rect(30,100,80,30)).states_([["Ablehnen!"]]);
+	but11.action = { ~net.sendMsg(\secrethitler, 0); win.close };
 
 	but2 = Button.new(win,Rect(140,40,80,30)).states_([["Play"],["Stop"]]);
-	StaticText.new(win,Rect(163,15,80,30)).string_("Sound2");
-	but2.action = { if (but2.value.asBoolean) { Ndef(selection[1]).play } { Ndef(selection[1]).free } };
+	StaticText.new(win,Rect(163,15,80,30)).string_("Gesetz 2");
+	but2.action = { if (but2.value.asBoolean) { Ndef(selection[1]).play } { Ndef(selection[1]).stop } };
+
+	but22 = Button.new(win,Rect(140,100,80,30)).states_([["Ablehnen!"]]);
+	but22.action = { ~net.sendMsg(\secrethitler, 1); win.close };
 
 	if (selection.size == 3) {
 		but3 = Button.new(win,Rect(250,40,80,30)).states_([["Play"],["Stop"]]);
-		StaticText.new(win,Rect(273,15,80,30)).string_("Sound3");
-		but3.action = { if (but3.value.asBoolean) { Ndef(selection[2]).play } { Ndef(selection[2]).free } };
+		StaticText.new(win,Rect(273,15,80,30)).string_("Gesetz 3");
+		but3.action = { if (but3.value.asBoolean) { Ndef(selection[2]).play } { Ndef(selection[2]).stop } };
+
+		but22 = Button.new(win,Rect(250,100,80,30)).states_([["Ablehnen!"]]);
+		but22.action = { ~net.sendMsg(\secrethitler, 2); win.close };
 	};
 
 /*	win.onClose = {
-		Ndef(selection[0]).free;
-		Ndef(selection[1]).free;
-		Ndef(selection[2]).free
+		Ndef(selection[0]).stop;
+		Ndef(selection[1]).stop;
+		Ndef(selection[2]).stop;
 	};*/
 
 	win.front;
 };
 
+// ~net.sendMsg(\listen, ~stack[3].key, ~stack[2].key, ~stack[0].key);
+
 // choosePlayer gui
 ~choose = { |selection|
 	selection.postln;
-	w = Window.new("Wähle einen Spieler", Rect(200, 400, 30 + (110 * selection.size), 100));
+	w = Window.new("Triff eine Wahl!", Rect(200, 400, 30 + (110 * selection.size), 100));
 
 	a = Button.new(w,Rect(30,40,80,30)).states_([[selection[0]]]);
-	a.action = {~net.sendMsg(\secrethitler, selection[0])};
+	a.action = {~net.sendMsg(\secrethitler, selection[0]); Window.closeAll};
 
 	b = Button.new(w,Rect(140,40,80,30)).states_([[selection[1]]]);
-	b.action = {~net.sendMsg(\secrethitler, selection[1])};
+	b.action = {~net.sendMsg(\secrethitler, selection[1]); Window.closeAll};
 
 	if (selection.size > 2) {
 		c = Button.new(w,Rect(250,40,80,30)).states_([[selection[2]]]);
-		c.action = {~net.sendMsg(\secrethitler, selection[2])};
+		c.action = {~net.sendMsg(\secrethitler, selection[2]); Window.closeAll};
 	};
 
 	if (selection.size > 3) {
 		c = Button.new(w,Rect(360,40,80,30)).states_([[selection[3]]]);
-		c.action = {~net.sendMsg(\secrethitler, selection[3])};
+		c.action = {~net.sendMsg(\secrethitler, selection[3]); Window.closeAll};
 	};
 
 	if (selection.size > 4) {
 		c = Button.new(w,Rect(470,40,80,30)).states_([[selection[4]]]);
-		c.action = {~net.sendMsg(\secrethitler, selection[4])};
+		c.action = {~net.sendMsg(\secrethitler, selection[4]); Window.closeAll};
 	};
 
 	if (selection.size > 5) {
 		c = Button.new(w,Rect(580,40,80,30)).states_([[selection[5]]]);
-		c.action = {~net.sendMsg(\secrethitler, selection[5])};
+		c.action = {~net.sendMsg(\secrethitler, selection[5]); Window.closeAll};
 	};
 
 	if (selection.size > 6) {
 		c = Button.new(w,Rect(690,40,80,30)).states_([[selection[6]]]);
-		c.action = {~net.sendMsg(\secrethitler, selection[6])};
+		c.action = {~net.sendMsg(\secrethitler, selection[6]); Window.closeAll};
 	};
 
 	if (selection.size > 7) {
 		c = Button.new(w,Rect(800,40,80,30)).states_([[selection[7]]]);
-		c.action = {~net.sendMsg(\secrethitler, selection[7])};
+		c.action = {~net.sendMsg(\secrethitler, selection[7]); Window.closeAll};
 	};
 
 	if (selection.size > 8) {
 		c = Button.new(w,Rect(910,40,80,30)).states_([[selection[8]]]);
-		c.action = {~net.sendMsg(\secrethitler, selection[8])};
+		c.action = {~net.sendMsg(\secrethitler, selection[8]); Window.closeAll};
 	};
 
 	if (selection.size > 9) {
 		c = Button.new(w,Rect(1020,40,80,30)).states_([[selection[9]]]);
-		c.action = {~net.sendMsg(\secrethitler, selection[9])};
+		c.action = {~net.sendMsg(\secrethitler, selection[9]); Window.closeAll};
 	};
-
 
 	w.front;
 };
@@ -156,15 +166,17 @@ OSCdef(\choose, { |msg|
 ~net.sendMsg(\secrethitler, "nein")
 ~election.value(1, ["ja", "ja", "ja", "nein", "nein", "nein"])
 
-~net.sendMsg(\prelisten, ~stack[3].key, ~stack[2].key, ~stack[0].key);
-~net.sendMsg(\choose, ~playerNicknames);
+~net.sendMsg(\listen, ~stack[3].key, ~stack[2].key, ~stack[0].key);
+~whoIsPresident.sendMsg(\choose, *[["Adolf", "Bertha", "Claus", "Dagmar", "Erich", "Franz"]].foldOSC)
+
+
 
 )
 
 
 
 
-~whoIsChancellor
+~whoIsChancellor = ~net
 ~whoIsPresident
 ~lastPresident
 ~lastChancellor

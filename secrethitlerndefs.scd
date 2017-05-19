@@ -189,11 +189,11 @@ Ndef(\liberal06, {
 }).add;
 
 )
-
+Ndef.clear
 NdefMixer(s)
 Ndef(\liberal01).stop
-Ndef(\liberal06).play;
-Ndef(\fascist02).play;
+Ndef(\liberal06).stop;
+Ndef(\fascist08).play;
 
 Ndef(\fascist01).stop;
 Ndef(\fascist02).stop;

@@ -15,6 +15,7 @@
 )
 
 (
+// chooses 3 randomized effects out of 6 for the buffer
 g = Ndef.new(\test, { |blubb = 0.3|
 	var sig, delay, clip, volosc, gverb, spaceverb, eq, effects, choice;
 	//sig = Out.ar(0, PlayBuf.ar(1, b));
@@ -36,7 +37,6 @@ g = Ndef.new(\test, { |blubb = 0.3|
 		sig = GVerb.ar(sig, 10, revtime: blubb);
 	};
 
-	// https://composerprogrammer.com/teaching/supercollider/sctutorial/6.4%20Effects%201.html
 	spaceverb = {
 		var z, y;
 		// reverb predelay time :
