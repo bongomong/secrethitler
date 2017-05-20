@@ -1,4 +1,6 @@
 (
+~catchAll = NetAddr.new("255.255.255.255", 57120);
+~catchAll.sendMsg(\master);
 
 NetAddr.broadcastFlag = true;
 // get your actual network ip via shell command
@@ -6,6 +8,7 @@ NetAddr.broadcastFlag = true;
 //~net = NetAddr.new("192.168.178.25", 57120);
 
 //main communication unit for the clients
+OSCdef(\secrethitler).clear;
 OSCdef(\secrethitler, { |msg, time, addr|
     "____________________".postln;
     addr.postln;

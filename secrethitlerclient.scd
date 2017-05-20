@@ -21,7 +21,7 @@ OSCdef(\depesche, { |msg|
 // this OSCdef opens a gui for the sounds that can be selected as president or chancellor
 OSCdef(\listen, { |msg|
 	var selection;
-	selection = msg.drop(1).postln;
+	selection = msg.drop(1);
 	{~listen.value(selection)}.defer;
 }, \listen, ~net);
 
@@ -58,12 +58,17 @@ OSCdef(\choose, { |msg|
 	but22.action = { ~net.sendMsg(\secrethitler, 1); win.close };
 
 	if (selection.size == 3) {
-		but3 = Button.new(win,Rect(250,40,80,30)).states_([["Play"],["Stop"]]);
-		StaticText.new(win,Rect(273,15,80,30)).string_("Gesetz 3");
-		but3.action = { if (but3.value.asBoolean) { Ndef(selection[2]).play } { Ndef(selection[2]).stop } };
+		if (selection[2].asString == "veto", {
+			but22 = Button.new(win,Rect(250,100,80,30)).states_([["Veto!"]]);
+			but22.action = { ~net.sendMsg(\secrethitler, "veto"); win.close };
+		},{
+			but3 = Button.new(win,Rect(250,40,80,30)).states_([["Play"],["Stop"]]);
+			StaticText.new(win,Rect(273,15,80,30)).string_("Gesetz 3");
+			but3.action = { if (but3.value.asBoolean) { Ndef(selection[2]).play } { Ndef(selection[2]).stop } };
 
-		but22 = Button.new(win,Rect(250,100,80,30)).states_([["Ablehnen!"]]);
-		but22.action = { ~net.sendMsg(\secrethitler, 2); win.close };
+			but22 = Button.new(win,Rect(250,100,80,30)).states_([["Ablehnen!"]]);
+			but22.action = { ~net.sendMsg(\secrethitler, 2); win.close };
+		});
 	};
 
 /*	win.onClose = {
@@ -75,9 +80,9 @@ OSCdef(\choose, { |msg|
 	win.front;
 };
 
-// ~net.sendMsg(\listen, ~stack[3].key, ~stack[2].key, ~stack[0].key);
+// ~net.sendMsg(\listen, ~stack[3].key, ~stack[2].key, "veto");
 
-// choosePlayer gui
+// choose gui
 ~choose = { |selection|
 	selection.postln;
 	w = Window.new("Triff eine Wahl!", Rect(200, 400, 30 + (110 * selection.size), 100));
@@ -162,7 +167,7 @@ OSCdef(\choose, { |msg|
 ~listOfPlayers[0].sendMsg(\depesche, [1].asOSCArgArray);
 ~net.sendMsg(\master, 1);
 ~net.sendMsg(\secrethitler, 1)
-~net.sendMsg(\secrethitler, "Franz")
+~net.sendMsg(\secrethitler, "Adolf")
 ~net.sendMsg(\secrethitler, "nein")
 ~election.value(1, ["ja", "ja", "ja", "nein", "nein", "nein"])
 

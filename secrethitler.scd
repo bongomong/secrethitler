@@ -27,6 +27,10 @@
     ~unsuccessfulVoteCounter = 0;
     ~lastDepesche = nil;
     ~gamestart.value;
+	~listOfPlayersSave = ~listOfPlayers.copy;
+	~playerNicknamesSave = ~playerNicknames.copy;
+	~isExtraTurn = false;
+	~extraTurnPresident = nil;
 };
 
 ~gamestart = {
@@ -79,6 +83,7 @@
     //("Der erste Präsident ist:" + ~playerNicknames[~listOfPlayers.indexOf(~whoIsPresident)]).postln;
     ~sendToAll.value((~playerNicknames[~listOfPlayers.indexOf(~whoIsPresident)] + "ist neuer Präsident!"));
 	~sendToPresident.value("Du bist Präsident! Bitte wähle einen Kanzler!");
+	~presidentAction.value;
 	~askForCandidate.value;
 };
 
@@ -135,11 +140,11 @@
         chancellorNetAddr = ~listOfPlayers[~playerNicknames.indexOfEqual(chancellor)];
 		// if((~lastChancellor != chancellorNetAddr) && (~lastPresident != chancellorNetAddr) && (~whoIsPresident != chancellorNetAddr)) {
 		~chancellorCandidate = chancellorNetAddr;
-		//(chancellor.asString + "ist neuer Kanzlerkandidat").postln;
 		~sendToAll.value((chancellor + "ist neuer Kanzlerkandidat! Stimme mit \"ja\" oder \"nein\"!"));
 		~askForVotes.value;
 		// set length of listOfVotes to the actual value shortly before the election
 		~listOfVotes = nil ! ~listOfPlayers.size;
+		~allAction.value;
 		~nextFunction = ~getPolls;
 		/*        } {
 		//"This player is not electable!".postln
@@ -173,7 +178,7 @@
 
 ~election = { |candidate, thePolls|
     // checks if the chancellor has been elected
-    var ja = 0, nein = 0;
+    var ja = 0, nein = 0, results = String.new;
     (candidate.asString + thePolls.asString).postln;
     thePolls.do({ arg item;
         item.postln;
@@ -182,6 +187,8 @@
     });
     if(ja > nein, {
         ~sendToAll.value((~playerNicknames[~listOfPlayers.indexOfEqual(candidate)] + "wurde zum Kanzler gewählt!"));
+		for(0, (~playerNicknames.size - 1), {arg i; results = results ++ ~playerNicknames[i] ++ ":" + thePolls[i] ++ "\r"});
+		~sendToAll.value("So wurde abgestimmt:\r" ++ results);
         ~whoIsChancellor = candidate;
         ~unsuccessfulVoteCounter = 0;
 		if(~fasstack.size > 2, {
@@ -196,17 +203,12 @@
 		});
     }, {
         ~sendToAll.value((~playerNicknames[~listOfPlayers.indexOfEqual(candidate)] + "wurde nicht zum Kanzler gewählt!"));
+		for(0, (~playerNicknames.size - 1), {arg i; results = results ++ ~playerNicknames[i] ++ ":" + thePolls[i] ++ "\r"});
+		~sendToAll.value("So wurde abgestimmt:\r" ++ results);
         //"Der Kanzler wurde nicht gewählt".postln;
         ~unsuccessfulVoteCounter = ~unsuccessfulVoteCounter + 1;
-        ~sendToAll.value(("Anzahl der in Folge abgelehnten Regierungen:" + ~unsuccessfulVoteCounter.asString));
-		if((~unsuccessfulVoteCounter % 3) == 0, {~forcedReveal.value});
-        ~lastPresident = ~whoIsPresident;
-        ~presidentIndex = ~presidentIndex + 1 % ~possiblePresidentIndizes.size;
-        ~whoIsPresident = ~listOfPlayers[~presidentIndex];
-        ~sendToAll.value((~playerNicknames[~listOfPlayers.indexOfEqual(~whoIsPresident)] + "ist neuer Präsident!"));
-        ~sendToPresident.value("Du bist Präsident! Bitte wähle einen Kanzler!");
-		~askForCandidate.value;
-        ~nextFunction = ~chooseChancellor
+        ~sendToAll.value(("Anzahl der inaktiven Regierungen in Folge:" + ~unsuccessfulVoteCounter.asString));
+		if((~unsuccessfulVoteCounter % 3) == 0, {~forcedReveal.value}, {~prepareNextTurn.value} );
     });
 };
 
@@ -215,6 +217,7 @@
     ~hand = ~stack.keep(3);
     ~stack = ~stack.drop(3);
     "Drei Karten wurden gezogen: ".postln;
+	~presidentAction.value;
     ~nextFunction = ~passTwo;
     ~sendToPresident.value("Wähle einen Sound und verwerfe ihn! Die verbleibenden Sounds werden dem Kanzler überreicht!");
 	~whoIsPresident.sendMsg(\listen, ~hand[0].key, ~hand[1].key, ~hand[2].key);
@@ -225,35 +228,59 @@
     // Legt eine Karte aus der Hand auf den Ablagestapel
     ~trash.add(~hand.removeAt(discard));
 	~sendToChancellor.value("Wähle einen Sound und verwerfe ihn! Der verbleibende Sound wird Gesetz und für alle hörbar!");
-	~whoIsPresident.sendMsg(\listen, ~hand[0].key, ~hand[1].key);
+	if(~fasstack.size == 5, {
+		~sendToAll.value("Von nun an hat der Kanzler ein Veto-Recht!");
+		~whoIsChancellor.sendMsg(\listen, ~hand[0].key, ~hand[1].key, "veto")
+	}, {
+		~whoIsChancellor.sendMsg(\listen, ~hand[0].key, ~hand[1].key)
+	});
     // "Zwei Karten wurden weitergegeben, eine abgelegt: ".postln;
-    ~nextFunction = ~reveal;
-    ~check.value;
+	~chancellorAction.value;
+	~nextFunction = ~reveal;
+	~check.value;
 };
 
 ~reveal = {|discard = 0|
-    // Legt von den verbleibenden zwei Karten eine auf den Ablagestapel und legt die andere entweder auf den Liberalenstapel oder den Faschistenstapel
-    ~trash.add(~hand.removeAt(discard));
-	if(~hand.at(0).key.asString.contains("fascist"), {
-		~fasstack.add(~hand.at(0));
-		~sendToAll.value("Ein faschistisches Gesetz wurde umgesetzt!\rAnzahl faschistischer Gesetze:" + ~fasstack.size + "\rAnzahl liberaler Gesetze:" + ~libstack.size);
+	// Legt von den verbleibenden zwei Karten eine auf den Ablagestapel und legt die andere entweder auf den Liberalenstapel oder den Faschistenstapel
+	if (discard.asString == "veto", {
+		2.do({~trash.add(~hand.removeAt(0))});
+		~sendToAll.value("Der Kanzler hat von seinem Vetorecht Gebrauch gemacht! Kein Gesetz wurde umgesetzt und es wird neu gewählt!");
+		~unsuccessfulVoteCounter = ~unsuccessfulVoteCounter + 1;
+        ~sendToAll.value(("Anzahl der inaktiven Regierungen in Folge:" + ~unsuccessfulVoteCounter.asString));
+		if((~unsuccessfulVoteCounter % 3) == 0, {~forcedReveal.value}, {~prepareNextTurn.value} );
 	}, {
-		~libstack.add(~hand.at(0));
-		~sendToAll.value("Ein liberales Gesetz wurde umgesetzt!\rAnzahl faschistischer Gesetze:" + ~fasstack.size + "\rAnzahl liberaler Gesetze:" + ~libstack.size);
+		~trash.add(~hand.removeAt(discard));
+		~hand.at(0).play;
+		if(~hand.at(0).key.asString.contains("fascist"), {
+			~fasstack.add(~hand.at(0));
+			~sendToAll.value("Ein faschistisches Gesetz wurde umgesetzt!\rAnzahl faschistischer Gesetze:" + ~fasstack.size + "\rAnzahl liberaler Gesetze:" + ~libstack.size);
+			~action.value;
+		}, {
+			~libstack.add(~hand.at(0));
+			~sendToAll.value("Ein liberales Gesetz wurde umgesetzt!\rAnzahl faschistischer Gesetze:" + ~fasstack.size + "\rAnzahl liberaler Gesetze:" + ~libstack.size);
+			~prepareNextTurn.value;
+		});
 	});
-	~hand.at(0).play;
 	~hand = List.new;
-	"Eine Karte wurde aufgedeckt, eine abgelegt: ".postln;
 	~check.value;
+};
+
+~action = {
 	//long game win conditions
+	~presidentAction.value;
 	if(~libstack.size == 5, {
 		~sendToAll.value("Die Liberalen haben gewonnen!");
+		~listOfPlayers = ~listOfPlayersSave;
+		~playerNicknames = ~playerNicknamesSave;
 		~nextFunction = ~initGame
 	},{
 		if(~fasstack.size == 6, {
 			~sendToAll.value("Die Faschisten haben gewonnen!");
+			~listOfPlayers = ~listOfPlayersSave;
+			~playerNicknames = ~playerNicknamesSave;
 			~nextFunction = ~initGame
 		},{
+			// event section
 			if(~fasstack.size == 5, { ~killSomeone.value; });
 			if(~fasstack.size == 4, { ~killSomeone.value; });
 			if(~fasstack.size == 3, {
@@ -267,35 +294,94 @@
 };
 
 ~killSomeone = {
-	~prepareNextTurn.value;
+	~sendToAll.value("In dieser Gesellschaft ist kein Platz für jeden! Die Regierung muss handeln!");
+	~sendToPresident.value("Es gibt keine Alternative! Ein Spieler muss sterben!");
+	~whoIsPresident.sendMsg(\choose, *[~playerNicknames].foldOSC);
+	~nextFunction = ~kill;
+};
+
+~kill = {|victim|
+	var deathIndex;
+	victim = victim.asString;
+	if( ~playerNicknames.includesEqual(victim) , {
+		if(~listOfRoles[~playerNicknames.indexOfEqual(victim)] == "Hitler" , {
+			~sendToAll.value("Secret Hitler wurde erschossen und die Faschisten sind führerlos! Die Liberalen haben gewonnen! Vorerst...");
+			~listOfPlayers = ~listOfPlayersSave;
+			~playerNicknames = ~playerNicknamesSave;
+			~nextFunction = ~initGame
+		}, {
+			~sendToAll.value(victim + "wurde zum Wohle der Nation hingerichtet! Dies soll eine Lehre für alle sein!");
+			~listOfPlayers[~playerNicknames.indexOfEqual(victim)].sendMsg(\depesche, "Du wurdest hingerichtet! Mach dir nichts draus! Politik ist nicht für jeden was!\r\r¯\\_(ツ)_/¯\r");
+			deathIndex = ~playerNicknames.indexOfEqual(victim);
+			~listOfPlayers.removeAt(deathIndex);
+			~playerNicknames.removeAt(deathIndex);
+			~listOfRoles.removeAt(deathIndex);
+			~possiblePresidentIndizes = ~possiblePresidentIndizes.keep(~possiblePresidentIndizes.size - 1);
+			~listOfPlayers.postln;
+			~playerNicknames.postln;
+			~prepareNextTurn.value;
+	})}, {
+		~sendToPresident.value(victim + "existiert nicht!");
+	});
 };
 
 ~chooseNextPresident = {
+	// president can't choose himself
+	var targets;
+	targets = ~playerNicknames.copy;
+	targets.removeAt(~listOfPlayers.indexOfEqual(~whoIsPresident));
+	~sendToAll.value("Aufgrund der akuten Bedrohungen ernennt der Präsident seinen Nachfolger per Dekret!");
+	~sendToPresident.value("Wähle deinen Nachfolger!");
+	~whoIsPresident.sendMsg(\choose, *[targets].foldOSC);
+	~nextFunction = ~extraTurn;
+};
+
+~extraTurn = {|target|
+	target = target.asString;
+	~extraTurnPresident = ~listOfPlayers[~playerNicknames.indexOfEqual(target)];
+	~isExtraTurn = true;
 	~prepareNextTurn.value;
 };
 
 ~investigateIdentity = {
+	// president can't investigate himself
+	var targets;
+	targets = ~playerNicknames.copy;
+	targets.removeAt(~listOfPlayers.indexOfEqual(~whoIsPresident));
+	~sendToAll.value("Es wurde zum Schutze aller eine Institution zur Untersuchung von politischen Gefährdern ins Leben gerufen. Der Präsident leitet die erste Operation persönlich");
+	~sendToPresident.value("Untersuche die Identität eines Spielers!");
+	~whoIsPresident.sendMsg(\choose, *[targets].foldOSC);
+	~nextFunction = ~investigation;
+};
+
+~investigation = {|target|
+	target = target.asString;
+	~sendToPresident.value(target + "ist" + ~listOfRoles[~playerNicknames.indexOfEqual(target)]);
 	~prepareNextTurn.value;
 };
 
 ~prepareNextTurn = {
 	//sets new president and remembers who was the last one
+	~presidentAction.value;
 	~lastPresident = ~whoIsPresident;
-	~lastChancellor = ~whoIsChancellor;
-	~whoIsChancellor = nil;
-	~presidentIndex = ~presidentIndex + 1 % ~possiblePresidentIndizes.size;
-	~whoIsPresident = ~listOfPlayers[~presidentIndex];
+	if(~whoIsChancellor != nil, {
+		~lastChancellor = ~whoIsChancellor;
+		~whoIsChancellor = nil;
+	});
+	if(~isExtraTurn == true, {
+		~whoIsPresident = ~extraTurnPresident;
+		~isExtraTurn == false;
+	}, {
+		~presidentIndex = ~presidentIndex + 1 % ~possiblePresidentIndizes.size;
+		~whoIsPresident = ~listOfPlayers[~presidentIndex];
+	});
+
 	~sendToAll.value(~playerNicknames[~listOfPlayers.indexOfEqual(~whoIsPresident)] + "ist neuer Präsident!");
 	~sendToPresident.value("Du bist Präsident! Bitte wähle einen Kanzler!");
 	~askForCandidate.value;
 	// (~whoIsPresident.asString + "ist neuer Präsident").postln;
 	// Sollten im Nachziehstapel weniger als 3 Karten sein, wird der Ablagestapel wieder in den Nachziehstapel gemischt
-	if(~stack.size < 3, {
-		~stack = ~stack.addAll(~trash).scramble;
-		~trash.clear;
-		"Der Ablagestapel wurde in den Nachziehstapel gemsicht:".postln;
-		~check.value;
-	});
+	~shuffle.value;
 	~nextFunction = ~chooseChancellor;
 };
 
@@ -306,15 +392,55 @@
 		~fasstack.add(~stack.removeAt(0));
 		~sendToAll.value("Ein faschistisches Gesetz wurde umgesetzt!\rAnzahl faschistischer Gesetze:" + ~fasstack.size + "\rAnzahl liberaler Gesetze:" + ~libstack.size);
 	}, {
-		~libstack.add(~hand.removeAt(0));
+		~libstack.add(~stack.removeAt(0));
 		~sendToAll.value("Ein liberales Gesetz wurde umgesetzt!\rAnzahl faschistischer Gesetze:" + ~fasstack.size + "\rAnzahl liberaler Gesetze:" + ~libstack.size);
 	});
+	~prepareNextTurn.value;
+};
+
+~shuffle = {
 	if(~stack.size < 3, {
         ~stack = ~stack.addAll(~trash).scramble;
         ~trash.clear;
         "Der Ablagestapel wurde in den Nachziehstapel gemsicht:".postln;
         ~check.value;
     });
+};
+
+~allAction = {
+	"allActionölkjöhöhöhöhöh".postln;
+	OSCdef(\secrethitler).clear;
+	OSCdef(\secrethitler, { |msg, time, addr|
+		"____________________".postln;
+		addr.postln;
+		msg[1].postln;
+		"____________________".postln;
+		~nextFunction.value(msg[1], addr);		//geht das so für die wahl?
+	}, \secrethitler);
+};
+
+~presidentAction = {
+	"presidentActionölkjöhöhöhöhöh".postln;
+	OSCdef(\secrethitler).clear;
+	OSCdef(\secrethitler, { |msg, time, addr|
+		"____________________".postln;
+		addr.postln;
+		msg[1].postln;
+		"____________________".postln;
+		~nextFunction.value(msg[1], addr);		//geht das so für die wahl?
+	}, \secrethitler, ~whoIsPresident);
+};
+
+~chancellorAction = {
+	"chancellorActionölkjöhöhöhöhöh".postln;
+	OSCdef(\secrethitler).clear;
+	OSCdef(\secrethitler, { |msg, time, addr|
+		"____________________".postln;
+		addr.postln;
+		msg[1].postln;
+		"____________________".postln;
+		~nextFunction.value(msg[1], addr);		//geht das so für die wahl?
+	}, \secrethitler, ~whoIsChancellor);
 };
 
 ~check = {
